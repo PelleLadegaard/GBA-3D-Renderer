@@ -1,0 +1,50 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "options": {
+        "cwd": "${workspaceRoot}"
+    },
+    "tasks": [
+        {
+            "label": "build and run",
+            "type": "shell",
+            "group": "build",
+            "presentation" : { "reveal": "always" },
+            "command": " make TARGET=output/Gba3dRailShooter && start D:/emulators/NoGBA/NO$GBA.exe ${workspaceRoot}/output/Gba3dRailShooter.gba",
+            "problemMatcher": [ "$gcc" ]
+        },
+        {
+            "label": "run",
+            "type": "shell",
+            "group": "build",
+            "presentation" : { "reveal": "never" },
+            "command": "start D:/emulators/NoGBA/NO$GBA.exe ${workspaceRoot}/output/Gba3dRailShooter.gba",
+            "problemMatcher": [ "$gcc" ]
+        },
+        {
+            "label": "build",
+            "type": "shell",
+            "group": "build",
+            "presentation" : { "reveal": "always" },
+            "command": " make TARGET=output/Gba3dRailShooter",
+            "problemMatcher": [ "$gcc" ]
+        },
+        {
+            "label": "rebuild",
+            "type": "shell",
+            "group": "build",
+            "presentation" : { "reveal": "always" },
+            "command": " make clean && make TARGET=output/Gba3dRailShooter",
+            "problemMatcher": [ "$gcc" ]
+        },
+        {
+            "label": "clean",
+            "type": "shell",
+            "group": "build",
+            "presentation" : { "reveal": "always" },
+            "command": " make clean",
+            "problemMatcher": [ "$gcc" ]
+        }
+    ]
+}
