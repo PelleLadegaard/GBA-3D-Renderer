@@ -4,12 +4,24 @@
 #include "lookups.h"
 
 template <class T>
+INLINE void swap (T& a, T& b) {
+	T temp = a;
+	a = b;
+	b = temp;
+}
+
+template <class T>
+INLINE T abs (T val) {
+	return (val<(T)0 ? val*(T)-1 : val);
+}
+
+template <class T>
 INLINE T IWRAM_CODE  max (T a, T b) {
-  return (a>b?a:b);
+	return (a>b?a:b);
 }
 template <class T>
 INLINE T IWRAM_CODE  min (T a, T b) {
-  return (a<b?a:b);
+	return (a<b?a:b);
 }
 
 INLINE int cosLut(int value, int angle){

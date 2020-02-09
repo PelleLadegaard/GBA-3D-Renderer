@@ -1,9 +1,7 @@
-#include "../include/gba.h"
-#include "../include/rendering.h"
-//#include "dma.h"
-//#include "timer.h"
+#include "../include/GBA/gba.h"
+#include "../include/graphics/rendering.h"
 
-#include "../include/models.h"
+#include "../include/data/models.h"
  
 int main(void){
 	bool sync = true;
@@ -38,18 +36,16 @@ int main(void){
 	//model testmodel(160,mod_cliff, vec3{0,0,0},0);
 	
 	while (true){
-		//if (keyDown(KEY_A)){}
-		
 		if (sync){
 			//Input
 			int spd = 5;
 			if (keyDown(KEY_L)){
-				cam.dir -= 5;
-				cam.invdir += 5;
+				cam.dir -= 1;
+				cam.invdir += 1;
 			}
 			if (keyDown(KEY_R)){
-				cam.dir += 5;
-				cam.invdir -= 5;
+				cam.dir += 1;
+				cam.invdir -= 1;
 			}
 			if (keyDown(KEY_UP)){
 				cam.pos.x += cosLut(spd, cam.dir-64);
@@ -70,13 +66,7 @@ int main(void){
 			
 			clearBuffer();
 			
-			//rotate += 5;
-			//cam.dir = rotate;
-			
-			//testmodel.draw(cam);
 			drawModel(testmodel, cam);
-
-			testmodel.dir++;
 			
 			sync = false;
 		}

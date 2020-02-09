@@ -1,6 +1,6 @@
 #pragma once
 
-#include "math.h"
+#include "../utility/mathtypes.h"
 
 //Camera format
 class Camera{

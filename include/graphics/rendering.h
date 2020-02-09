@@ -1,10 +1,8 @@
 #pragma once
 
-#include <string.h>
-#include <algorithm>
-#include <cstdlib>
 #include "formats.h"
-#include "dma.h"
+#include "../utility/dma.h"
+#include "../utility/math.h"
 
 //#include "timer.h"
 
@@ -63,7 +61,7 @@ INLINE void drawLineVertical(int ystart,int yend,int x, u16 col){
 
 INLINE void drawRightFlatTriangle(vec2 v0,vec2 v1,vec2 v2, u16 col){
 	if (v1.y > v2.y){
-		std::swap(v1,v2);
+		swap(v1,v2);
 	}
 	
 	int difx = (v1.x-v0.x);
@@ -82,7 +80,7 @@ INLINE void drawRightFlatTriangle(vec2 v0,vec2 v1,vec2 v2, u16 col){
 
 INLINE void drawLeftFlatTriangle(vec2 v0,vec2 v1,vec2 v2, u16 col){
 	if (v0.y > v1.y){
-		std::swap(v0,v1);
+		swap(v0,v1);
 	}
 	
 	int difx = (v2.x - v0.x);
@@ -109,13 +107,13 @@ void IWRAM_CODE drawTriangle(const Poly &tri){
 	
 	//Sort the vertex list from bottom to top
 	if (v0.x == max(v0.x,v1.x)){
-		std::swap(v0,v1);
+		swap(v0,v1);
 	}
 	if (v1.x == max(v1.x,v2.x)){
-		std::swap(v1,v2);
+		swap(v1,v2);
 	}
 	if (v0.x == max(v0.x,v1.x)){
-		std::swap(v0,v1);
+		swap(v0,v1);
 	}
 	
 	
@@ -154,7 +152,7 @@ INLINE void drawLineVerticalClipped(int ystart,int yend,int x, u16 col){
 
 INLINE void drawRightFlatTriangleClipped(vec2 v0,vec2 v1,vec2 v2, u16 col){
 	if (v1.y > v2.y){
-		std::swap(v1,v2);
+		swap(v1,v2);
 	}
 	
 	int difx = (v1.x-v0.x);
@@ -180,7 +178,7 @@ INLINE void drawRightFlatTriangleClipped(vec2 v0,vec2 v1,vec2 v2, u16 col){
 
 INLINE void drawLeftFlatTriangleClipped(vec2 v0,vec2 v1,vec2 v2, u16 col){
 	if (v0.y > v1.y){
-		std::swap(v0,v1);
+		swap(v0,v1);
 	}
 	
 	int difx = (v2.x - v0.x);
@@ -214,13 +212,13 @@ void IWRAM_CODE drawTriangleClipped(const Poly &tri){
 	
 	//Sort the vertex list from bottom to top
 	if (v0.x == max(v0.x,v1.x)){
-		std::swap(v0,v1);
+		swap(v0,v1);
 	}
 	if (v1.x == max(v1.x,v2.x)){
-		std::swap(v1,v2);
+		swap(v1,v2);
 	}
 	if (v0.x == max(v0.x,v1.x)){
-		std::swap(v0,v1);
+		swap(v0,v1);
 	}
 	
 	
