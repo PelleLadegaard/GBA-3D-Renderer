@@ -32,36 +32,34 @@ int main(void){
 	swapBuffers();
 	
 	int rotate = 0;
-	Model testmodel(164,mod_road, vec3{0,0,0},0);
+	//Model testmodel(164,mod_road, vec3{0,0,0},0);
 	//model testmodel(160,mod_cliff, vec3{0,0,0},0);
+	//Model testmodel(181,mod_city, vec3{0,0,0},0);
+	Model testmodel(177,mod_city_fixed, vec3{0,0,0},0);
 	
 	while (true){
 		if (sync){
 			//Input
 			int spd = 5;
 			if (keyDown(KEY_L)){
-				cam.dir -= 1;
-				cam.invdir += 1;
+				cam.dir -= 5;
+				cam.invdir += 5;
 			}
 			if (keyDown(KEY_R)){
-				cam.dir += 1;
-				cam.invdir -= 1;
+				cam.dir += 5;
+				cam.invdir -= 5;
 			}
 			if (keyDown(KEY_UP)){
-				cam.pos.x += cosLut(spd, cam.dir-64);
-				cam.pos.y += sinLut(spd, cam.dir-64);
+				moveCamera(cam, spd, cam.dir-64);
 			}
 			if (keyDown(KEY_DOWN)){
-			    cam.pos.x += cosLut(spd, cam.dir+64);
-				cam.pos.y += sinLut(spd, cam.dir+64);
+				moveCamera(cam, spd, cam.dir+64);
 			}
 			if (keyDown(KEY_LEFT)){
-			    cam.pos.x += cosLut(spd, cam.dir+128);
-				cam.pos.y += sinLut(spd, cam.dir+128);
+				moveCamera(cam, spd, cam.dir+128);
 			}
 			if (keyDown(KEY_RIGHT)){
-			    cam.pos.x += cosLut(spd, cam.dir);
-				cam.pos.y += sinLut(spd, cam.dir);
+				moveCamera(cam, spd, cam.dir);
 			}
 			
 			clearBuffer();

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "formats.h"
+#include "Camera.h"
 #include "../utility/dma.h"
 #include "../utility/math.h"
 
@@ -341,12 +342,12 @@ void drawLine(int x0,int y0, int x1,int y1, u16 col){
 
 
 
-INLINE Vertex2D projectVertex(const Vertex3D& vert, const Camera& cam, const vec3& tpos, int rotation){
-	vec2 pos2D = {vert.pos.x,vert.pos.y};
+INLINE vec2 projectVertex(const vec3& vert, const Camera& cam, const vec3& tpos, int rotation){
+	vec2 pos2D = {vert.x,vert.y};
 	
 	//dpos = Vector2DRotateHalf(dpos, cam.dir);
 	pos2D = vector2DRotate(pos2D, cam.invdir+rotation);
-	pos2D.y -= vert.pos.z;
+	pos2D.y -= vert.z;
 	
 	//Model translation
 	pos2D.x += tpos.x;
@@ -372,8 +373,8 @@ INLINE Vertex2D projectVertex(const Vertex3D& vert, const Camera& cam, const vec
 	//Shift
 	pos2D.y = pos2D.y<<16;//shift for higher precision necessary on the x axis
 	
-	Vertex2D result;
-	result.pos = pos2D;
+	vec2 result;
+	result = pos2D;
 	
 	return result;
 }
@@ -382,7 +383,7 @@ void IWRAM_CODE drawModel(const Model& mod, const Camera& cam){
 	//Variables
 	Poly3D polyWrld;
 	Poly polyScrn;
-	Vertex2D vert0,vert1,vert2;
+	vec2 vert0,vert1,vert2;
 	int i;
 	vec2 ppos;
 	vec3 tpos;
@@ -400,9 +401,9 @@ void IWRAM_CODE drawModel(const Model& mod, const Camera& cam){
 		vert1 = projectVertex(polyWrld.v1, cam, tpos, mod.dir);
 		vert2 = projectVertex(polyWrld.v2, cam, tpos, mod.dir);
 		
-		polyScrn.v0 = vert0.pos;
-		polyScrn.v1 = vert1.pos;
-		polyScrn.v2 = vert2.pos;
+		polyScrn.v0 = vert0;
+		polyScrn.v1 = vert1;
+		polyScrn.v2 = vert2;
 		polyScrn.col = polyWrld.col;
 		
 		if (insideViewVertical(polyScrn.v0,polyScrn.v1,polyScrn.v2)){

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../GBA/gba_video.h"
+
 #include "mathtypes.h"
 #include "lookups.h"
 
@@ -54,12 +56,13 @@ vec2 vector2DRotateHalf(vec2 v, int dir){
 			(v.x*sn + v.y*cs)>>8};
 }
 
+// Calculate if the vertices are oriented in clockwise order, useful for backface culling
 bool clockwise(vec2 v0, vec2 v1, vec2 v2){
     return (((v1.y - v0.y) * (v2.x - v1.x) -
               (v1.x - v0.x) * (v2.y - v1.y)) > 0);
 }
 
-//Inside view
+// Inside view
 bool insideViewHorizontal(vec2 v0, vec2 v1, vec2 v2){
 	int maxx = max(max(v0.x,v1.x),v2.x)>>16;
 	int minx = min(min(v0.x,v1.x),v2.x)>>16;
