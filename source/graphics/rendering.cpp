@@ -1,0 +1,338 @@
+#include "../../include/graphics/rendering.h"
+
+#include "../../include/GBA/gba_video.h"
+
+#include "../../include/utility/dma.h"
+#include "../../include/utility/mathtypes.h"
+#include "../../include/utility/math.h"
+
+#include "../../include/graphics/Polygon.h"
+#include "../../include/graphics/Camera.h"
+
+u16* CurrentBuffer BackBuffer;
+
+//Misc
+	//Extends 8-bit data over a 32-bit variable 4 times
+u32 quad8(u8 x)	{	return x*0x01010101;	}
+u32 quad16(u16 x){   return x|(x<<16);    }
+
+//Rendering buffers
+	//Swaps the front and back buffer
+void swapBuffers(){
+	REG_DISPCNT ^= 0x10;
+	
+	if (CurrentBuffer == FrontBuffer){
+		CurrentBuffer = BackBuffer;
+	}
+	else{
+		CurrentBuffer = FrontBuffer;
+	}
+}
+
+	//Clears the buffer you're currently drawing to
+void clearBuffer(){
+	volatile u32 fillvalue = 0;
+	dmaSet32(&fillvalue,(u32*)CurrentBuffer,9600);
+}
+
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//Coloured polygon
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+INLINE void drawLineVertical(int ystart,int yend,int x, u16 col){
+	u16* dest = CurrentBuffer+(x*160+ystart);
+	for (int i=yend-ystart; i >= 0 ; i--){
+		*dest++ = col;
+	}
+}
+
+INLINE void drawRightFlatTriangle(vec2 v0,vec2 v1,vec2 v2, u16 col){
+	if (v1.y > v2.y){
+		swap(v1,v2);
+	}
+	
+	int difx = (v1.x-v0.x);
+	
+	int invslope1 = (v1.y - v0.y) / difx;
+	int invslope2 = (v2.y - v0.y) / difx;
+	int cury1 = v0.y;
+	int cury2 = v0.y;
+	
+	for (int scanlineX = v0.x; scanlineX <= v1.x; scanlineX++){
+		drawLineVertical(cury1>>16,cury2>>16,scanlineX, col);
+		cury1 += invslope1;
+		cury2 += invslope2;
+	}
+}
+
+INLINE void drawLeftFlatTriangle(vec2 v0,vec2 v1,vec2 v2, u16 col){
+	if (v0.y > v1.y){
+		swap(v0,v1);
+	}
+	
+	int difx = (v2.x - v0.x);
+	
+	int invslope1 = (v2.y - v0.y) / difx;
+	int invslope2 = (v2.y - v1.y) / difx;
+	int cury1 = v2.y;
+	int cury2 = v2.y;
+	
+	for (int scanlineX = v2.x; scanlineX > v0.x; scanlineX--){
+		drawLineVertical(cury1>>16,cury2>>16,scanlineX, col);
+		cury1 -= invslope1;
+		cury2 -= invslope2;
+	}
+}
+
+void IWRAM_CODE drawTriangle(const Poly &tri){
+	vec2 v0,v1,v2;
+	v0 = tri.v0;
+	v1 = tri.v1;
+	v2 = tri.v2;
+	
+	if (!clockwise(v2,v1,v0)){return;}
+	
+	//Sort the vertex list from bottom to top
+	if (v0.x == max(v0.x,v1.x)){
+		swap(v0,v1);
+	}
+	if (v1.x == max(v1.x,v2.x)){
+		swap(v1,v2);
+	}
+	if (v0.x == max(v0.x,v1.x)){
+		swap(v0,v1);
+	}
+	
+	
+	
+	//check for trivial case of bottom-flat triangle
+	if (v1.x == v2.x){
+		drawRightFlatTriangle(v0,v1,v2, tri.col);
+	}
+	//check for trivial case of top-flat triangle 
+	else if (v0.x == v1.x){
+		drawLeftFlatTriangle(v0,v1,v2, tri.col);
+	} 
+	else{
+		//general case - split the triangle in a topflat and bottom-flat one
+		int lerpmult = ((v1.x - v0.x)<<16) / (v2.x - v0.x);
+		vec2 v3{v1.x, v0.y + lerpmult*((v2.y - v0.y)>>16)};
+		drawRightFlatTriangle(v0,v1,v3, tri.col);
+		drawLeftFlatTriangle(v1,v3,v2, tri.col);
+	}
+}
+
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//Clipped coloured polygon
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+INLINE void drawLineVerticalClipped(int ystart,int yend,int x, u16 col){
+	int begin = max(ystart,0);
+	u16* dest = CurrentBuffer+(x*160+begin);
+	for (int i=min(yend,SCREEN_HEIGHT-1)-begin; i >= 0 ; i--){
+		*dest++ = col;
+	}
+}
+
+INLINE void drawRightFlatTriangleClipped(vec2 v0,vec2 v1,vec2 v2, u16 col){
+	if (v1.y > v2.y){
+		swap(v1,v2);
+	}
+	
+	int difx = (v1.x-v0.x);
+	
+	int invslope1 = (v1.y - v0.y) / difx;
+	int invslope2 = (v2.y - v0.y) / difx;
+	int cury1 = v0.y;
+	int cury2 = v0.y;
+	
+	if (v0.x < 0){
+		int diff = v0.x*-1;
+		cury1 += invslope1*diff;
+		cury2 += invslope2*diff;
+	}
+	
+	int end = min(v1.x,SCREEN_WIDTH-1);
+	for (int scanlineX = max(v0.x,0); scanlineX <= end; scanlineX++){
+		drawLineVerticalClipped(cury1>>16,cury2>>16,scanlineX, col);
+		cury1 += invslope1;
+		cury2 += invslope2;
+	}
+}
+
+INLINE void drawLeftFlatTriangleClipped(vec2 v0,vec2 v1,vec2 v2, u16 col){
+	if (v0.y > v1.y){
+		swap(v0,v1);
+	}
+	
+	int difx = (v2.x - v0.x);
+	
+	int invslope1 = (v2.y - v0.y) / difx;
+	int invslope2 = (v2.y - v1.y) / difx;
+	int cury1 = v2.y;
+	int cury2 = v2.y;
+	
+	if (v2.x >= SCREEN_WIDTH){
+		int diff = v2.x-SCREEN_WIDTH+1;
+		cury1 -= invslope1*diff;
+		cury2 -= invslope2*diff;
+	}
+	
+	int end = max(v0.x+1,0);
+	for (int scanlineX = min(v2.x,SCREEN_WIDTH-1); scanlineX >= end; scanlineX--){
+		drawLineVerticalClipped(cury1>>16,cury2>>16,scanlineX, col);
+		cury1 -= invslope1;
+		cury2 -= invslope2;
+	}
+}
+
+void IWRAM_CODE drawTriangleClipped(const Poly &tri){
+	vec2 v0,v1,v2;
+	v0 = tri.v0;
+	v1 = tri.v1;
+	v2 = tri.v2;
+	
+	if (!clockwise(v2,v1,v0)){return;}
+	
+	//Sort the vertex list from bottom to top
+	if (v0.x == max(v0.x,v1.x)){
+		swap(v0,v1);
+	}
+	if (v1.x == max(v1.x,v2.x)){
+		swap(v1,v2);
+	}
+	if (v0.x == max(v0.x,v1.x)){
+		swap(v0,v1);
+	}
+	
+	
+	
+	//check for trivial case of bottom-flat triangle
+	if (v1.x == v2.x){
+		drawRightFlatTriangleClipped(v0,v1,v2, tri.col);
+	}
+	//check for trivial case of top-flat triangle 
+	else if (v0.x == v1.x){
+		drawLeftFlatTriangleClipped(v0,v1,v2, tri.col);
+	} 
+	else{
+		//general case - split the triangle in a topflat and bottom-flat one
+		int lerpmult = ((v1.x - v0.x)<<16) / (v2.x - v0.x);
+		vec2 v3{v1.x, v0.y + lerpmult*((v2.y - v0.y)>>16)};
+		drawRightFlatTriangleClipped(v0,v1,v3, tri.col);
+		drawLeftFlatTriangleClipped(v1,v3,v2, tri.col);
+	}
+}
+
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//Line drawing
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void drawLineLow(int x0,int y0, int x1,int y1, u16 col){
+	int dx = x1 - x0;
+	int dy = y1 - y0;
+	int yi = 1;
+	
+	if (dy < 0){
+		yi = -1;
+		dy = -dy;
+	}
+	
+	int D = 2*dy - dx;
+	int y = y0;
+	
+	for (int x=x0; x<=x1; x++){
+		drawPixel(x,y,col);
+		
+		if (D > 0){
+			y += yi;
+			D -= 2*dx;
+		}
+		
+		D += 2*dy;
+	}
+}
+
+void drawLineHigh(int x0,int y0, int x1,int y1, u16 col){
+	int dx = x1 - x0;
+	int dy = y1 - y0;
+	int xi = 1;
+	
+	if (dx < 0){
+		xi = -1;
+		dx = -dx;
+	}
+	
+	int D = 2*dx - dy;
+	int x = x0;
+	
+	for (int y=y0; y<=y1; y++){
+		drawPixel(x,y, col);
+		
+		if (D > 0){
+			x += xi;
+			D -= 2*dy;
+		}
+		
+		D += 2*dx;
+	}
+}
+
+void drawLine(int x0,int y0, int x1,int y1, u16 col){
+	if (abs(y1 - y0) < abs(x1 - x0)){
+		if (x0 > x1){
+			drawLineLow(x1, y1, x0, y0, col);
+		}
+		else{
+			drawLineLow(x0, y0, x1, y1, col);
+		}
+	}
+	else{
+		if (y0 > y1){
+			drawLineHigh(x1, y1, x0, y0, col);
+		}
+		else{
+			drawLineHigh(x0, y0, x1, y1, col);
+		}
+	}
+}
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//Projecting
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+vec2 IWRAM_CODE projectVertex(const vec3& vert, const Camera& cam, const vec3& tpos, int rotation){
+	vec2 pos2D = {vert.x,vert.y};
+	
+	//dpos = Vector2DRotateHalf(dpos, cam.dir);
+	pos2D = vector2DRotate(pos2D, cam.invdir+rotation);
+	pos2D.y -= vert.z;
+	
+	//Model translation
+	pos2D.x += tpos.x;
+	pos2D.y += tpos.y-tpos.z;
+	
+	//Zoom
+	pos2D.x *= cam.zoom;
+	pos2D.y *= cam.zoom;
+	
+	//Translate to middle of screen
+	pos2D.x += 59;
+	pos2D.y += 79;
+	
+	//Shift
+	pos2D.y = pos2D.y<<16;//shift for higher precision necessary on the x axis
+	
+	return pos2D;
+}

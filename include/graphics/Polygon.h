@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../GBA/gba_types.h"
 #include "../utility/mathtypes.h"
 
 //Polygon formats
@@ -10,9 +11,6 @@ public:
 };
 class Poly3D{
 public:
-	vec3 v0,v1,v2;
-	u16 col;
-	
 	Poly3D(){}
 	
 	Poly3D(vec3 pos0,vec3 pos1,vec3 pos2,u16 tcol):
@@ -25,17 +23,7 @@ public:
 			  v1(vec3(x1,y1,z1)),
 			  v2(vec3(x2,y2,z2)),
 			  col(tcol){}
-};
-
-// Model format
-class Model{
-public:
-	Model(int tpolycount,const Poly3D* ttris, vec3 tpos,int tdir):
-			polycount(tpolycount),tris(ttris), pos(tpos),dir(tdir){}
 	
-	int polycount;
-	const Poly3D* tris;
-	
-	vec3 pos;
-	int dir;
+	vec3 v0,v1,v2;
+	u16 col;
 };

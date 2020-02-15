@@ -1,20 +1,17 @@
 #include "../include/GBA/gba.h"
 #include "../include/graphics/rendering.h"
+#include "../include/graphics/Model.h"
+#include "../include/graphics/Camera.h"
 
 #include "../include/data/models.h"
  
 int main(void){
 	bool sync = true;
 
-	//Initialize the camera
-	Camera cam;
-	cam.pos.x = 0;
-	cam.pos.y = 0;
-	cam.dir = 0;
-	cam.invdir = 0;
-	cam.zoom = 4;
+	// Initialize the camera
+	Camera cam(vec2(0,0), 63, 4);
 	
-	//Initialize screen
+	// Initialize screen
 	setMode( MODE_5 | BG2_ENABLE );
     u16* dx = (u16*)0x4000020;
 	u16* dmx = (u16*)0x4000022;
@@ -25,49 +22,48 @@ int main(void){
 	dmx[0] = 256;
 	dmy[0] = 0;
 	
-	//Clear both buffers one time at start
+	// Clear both buffers one time at start
 	clearBuffer();
 	swapBuffers();
 	clearBuffer();
 	swapBuffers();
 	
-	int rotate = 0;
-	//Model testmodel(164,mod_road, vec3{0,0,0},0);
-	//model testmodel(160,mod_cliff, vec3{0,0,0},0);
-	//Model testmodel(181,mod_city, vec3{0,0,0},0);
-	Model testmodel(177,mod_city_fixed, vec3{0,0,0},0);
+	// Model initialization, select a line to uncomment to draw the model. Also make sure to uncomment the correct model data in include/data/models.h
+	Model testmodel(164,mod_road, vec3(0,0,0),0);
+	//model testmodel(160,mod_cliff, vec3(0,0,0),0);
+	//Model testmodel(177,mod_city, vec3(0,0,0),0);
 	
-	while (true){
+	while(true){
+		// Game loop
 		if (sync){
-			//Input
+			// Input
 			int spd = 5;
 			if (keyDown(KEY_L)){
-				cam.dir -= 5;
-				cam.invdir += 5;
+				cam.rotate(-1);
 			}
 			if (keyDown(KEY_R)){
-				cam.dir += 5;
-				cam.invdir -= 5;
+				cam.rotate(1);
 			}
 			if (keyDown(KEY_UP)){
-				moveCamera(cam, spd, cam.dir-64);
+				cam.move(spd, cam.dir-64);
 			}
 			if (keyDown(KEY_DOWN)){
-				moveCamera(cam, spd, cam.dir+64);
+				cam.move(spd, cam.dir+64);
 			}
 			if (keyDown(KEY_LEFT)){
-				moveCamera(cam, spd, cam.dir+128);
+				cam.move(spd, cam.dir+128);
 			}
 			if (keyDown(KEY_RIGHT)){
-				moveCamera(cam, spd, cam.dir);
+				cam.move(spd, cam.dir);
 			}
 			
 			clearBuffer();
 			
-			drawModel(testmodel, cam);
+			testmodel.draw(cam);
 			
 			sync = false;
 		}
+		// Vsync
 		else{
 			if (REG_VCOUNT > 159){
 				sync = true;
