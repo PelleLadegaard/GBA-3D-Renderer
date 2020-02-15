@@ -9,7 +9,7 @@ int main(void){
 	bool sync = true;
 
 	// Initialize the camera
-	Camera cam(vec2(0,0), 63, 4);
+	Camera cam(vec2(0,0), 31, 4);
 	
 	// Initialize screen
 	setMode( MODE_5 | BG2_ENABLE );
